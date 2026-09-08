@@ -1,0 +1,6 @@
+{
+  "name": "Blackwood Pines",
+  "description": "A first-person 3D survival horror game set in a dark foggy forest. Evade the stalker, search for generator parts, and escape through the forestry gate.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

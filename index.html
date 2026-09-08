@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blackwood Pines</title>
+    <meta name="description" content="A first-person 3D survival horror game set in a dark foggy forest. Evade the stalker, search for generator parts, and escape through the forestry gate." />
+    <meta property="og:title" content="Blackwood Pines" />
+    <meta property="og:description" content="A first-person 3D survival horror game set in a dark foggy forest. Evade the stalker, search for generator parts, and escape through the forestry gate." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="robots" content="noindex, nofollow" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Aggressively prevent and clear service workers
+      (function() {
+        // Prevent service worker registration
+        if ('serviceWorker' in navigator) {
+          const originalRegister = navigator.serviceWorker.register;
+          navigator.serviceWorker.register = function() {
+            console.warn('Service worker registration blocked for this application');
+            return Promise.reject(new Error('Service worker registration is disabled'));
+          };
+          
+          // Clear any existing service workers
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(registration) {
+              registration.unregister().then(function(success) {
+                if (success) {
+                  console.log('Service worker unregistered:', registration.scope);
+                }
+              });
+            });
+          });
+          
+          // Clear service worker caches
+          if ('caches' in window) {
+            caches.keys().then(function(cacheNames) {
+              cacheNames.forEach(function(cacheName) {
+                caches.delete(cacheName).then(function(success) {
+                  if (success) {
+                    console.log('Cache deleted:', cacheName);
+                  }
+                });
+              });
+            });
+          }
+        }
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
