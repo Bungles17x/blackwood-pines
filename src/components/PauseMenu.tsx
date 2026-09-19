@@ -1,7 +1,8 @@
 import React from 'react';
-import { Play, RotateCcw, Volume2, Sliders, X, Home, BookOpen, MapPin, Compass } from 'lucide-react';
+import { Play, RotateCcw, Volume2, Sliders, X, Home, BookOpen, MapPin, Compass, Save, Download } from 'lucide-react';
 import { Chapter, GameSettings } from '../types';
 import { horrorAudio } from '../audio/horrorAudio';
+import { hasSaveGame, getSaveInfo } from '../utils/saveSystem';
 
 interface PauseMenuProps {
   onResume: () => void;
@@ -10,6 +11,8 @@ interface PauseMenuProps {
   currentChapter?: Chapter;
   settings: GameSettings;
   onUpdateSettings: (newSettings: Partial<GameSettings>) => void;
+  onSaveGame?: () => void;
+  onLoadGame?: () => void;
 }
 
 export const PauseMenu: React.FC<PauseMenuProps> = ({
@@ -19,6 +22,8 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({
   currentChapter,
   settings,
   onUpdateSettings,
+  onSaveGame,
+  onLoadGame,
 }) => {
   const handleHover = () => {
     horrorAudio.playMenuHover();
@@ -135,6 +140,43 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({
               <span>MAIN MENU</span>
             </button>
           </div>
+
+          {/* Save/Load Buttons */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              id="save-btn"
+              onClick={() => {
+                horrorAudio.playMenuSelect();
+                onSaveGame?.();
+              }}
+              onMouseEnter={handleHover}
+              className="flex items-center justify-center gap-2 py-2.5 bg-blue-900/50 hover:bg-blue-800/50 border border-blue-800 hover:border-blue-700 text-zinc-300 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
+            >
+              <Save className="h-3.5 w-3.5 text-blue-400" />
+              <span>SAVE</span>
+            </button>
+
+            <button
+              id="load-btn"
+              onClick={() => {
+                horrorAudio.playMenuSelect();
+                onLoadGame?.();
+              }}
+              onMouseEnter={handleHover}
+              disabled={!hasSaveGame()}
+              className="flex items-center justify-center gap-2 py-2.5 bg-purple-900/50 hover:bg-purple-800/50 border border-purple-800 hover:border-purple-700 text-zinc-300 font-semibold text-xs rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-3.5 w-3.5 text-purple-400" />
+              <span>LOAD</span>
+            </button>
+          </div>
+
+          {/* Save Game Info */}
+          {hasSaveGame() && (
+            <div className="text-[10px] text-zinc-500 text-center">
+              Save available: {getSaveInfo() ? `${Math.floor(getSaveInfo()!.timeSurvived / 60)}m ${getSaveInfo()!.timeSurvived % 60}s` : 'Unknown'}
+            </div>
+          )}
         </div>
 
         {/* Tactical Quick Settings */}

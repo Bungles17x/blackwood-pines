@@ -2,6 +2,19 @@ export type GameState = 'TITLE' | 'PLAYING' | 'PAUSED' | 'GAMEOVER' | 'VICTORY';
 
 export type CreatureState = 'DORMANT' | 'PATROL' | 'INVESTIGATE' | 'STALK' | 'CHASE';
 
+// Electron API types for auto-updater
+export interface ElectronAPI {
+  platform: string;
+  onUpdateStatus: (callback: (message: string) => void) => void;
+  checkForUpdates: () => Promise<void>;
+}
+
+declare global {
+  interface Window {
+    electronAPI?: ElectronAPI;
+  }
+}
+
 export interface LoreNote {
   id: string;
   title: string;
@@ -23,6 +36,17 @@ export interface Inventory {
   flares: number;
   hasMap: boolean;
   notesRead: string[];
+  // New collectible items
+  matches: number; // Waterproof matches for lighting flares/candles
+  compass: boolean; // Compass for navigation
+  rope: boolean; // Rope for climbing or escaping
+  medkit: number; // Medical supplies for healing
+  rations: number; // Food rations for stamina
+  flashlightBulb: boolean; // Spare flashlight bulb
+  whistle: boolean; // Emergency whistle for signaling
+  crowbar: boolean; // Crowbar for opening locked areas
+  keys: number; // Miscellaneous keys found
+  ancientArtifact: number; // Mysterious artifacts from the woods
 }
 
 export interface FlashlightState {

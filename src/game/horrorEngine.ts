@@ -259,6 +259,17 @@ export class HorrorEngine {
     flares: 1,
     hasMap: false,
     notesRead: [],
+    // New collectible items
+    matches: 5,
+    compass: false,
+    rope: false,
+    medkit: 1,
+    rations: 2,
+    flashlightBulb: false,
+    whistle: false,
+    crowbar: false,
+    keys: 0,
+    ancientArtifact: 0,
   };
   public isPowerRestored = false;
   public isSubstationUnlocked = false;
@@ -1113,6 +1124,187 @@ export class HorrorEngine {
             this.onBannerMessage?.(null);
           }
         }, 5000);
+        break;
+      }
+      // New collectible items
+      case 'matches': {
+        item.collected = true;
+        this.inventory.matches += 5;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Waterproof Matches! Can be used to light flares and candles.";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 3000);
+        break;
+      }
+      case 'compass': {
+        item.collected = true;
+        this.inventory.compass = true;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Compass! Will help with navigation through the dense forest.";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 3000);
+        break;
+      }
+      case 'rope': {
+        item.collected = true;
+        this.inventory.rope = true;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Climbing Rope! Useful for scaling obstacles or escaping.";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 3000);
+        break;
+      }
+      case 'medkit': {
+        item.collected = true;
+        this.inventory.medkit += 1;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Medical Kit! Can be used to heal injuries.";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 3000);
+        break;
+      }
+      case 'rations': {
+        item.collected = true;
+        this.inventory.rations += 2;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Food Rations! Will restore stamina when consumed.";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 3000);
+        break;
+      }
+      case 'flashlight_bulb': {
+        item.collected = true;
+        this.inventory.flashlightBulb = true;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Spare Flashlight Bulb! Can replace a broken flashlight.";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 3000);
+        break;
+      }
+      case 'whistle': {
+        item.collected = true;
+        this.inventory.whistle = true;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Emergency Whistle! Can signal for help or distract the creature.";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 3000);
+        break;
+      }
+      case 'crowbar': {
+        item.collected = true;
+        this.inventory.crowbar = true;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Crowbar! Can pry open locked doors and containers.";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 3000);
+        break;
+      }
+      case 'key': {
+        item.collected = true;
+        this.inventory.keys += 1;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Old Key! Might open something important.";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 3000);
+        break;
+      }
+      case 'ancient_artifact': {
+        item.collected = true;
+        this.inventory.ancientArtifact += 1;
+        const mesh = this.itemMeshes.get(item.id);
+        if (mesh) this.scene.remove(mesh);
+        horrorAudio.playPickup();
+        this.onInventoryChange?.({ ...this.inventory });
+        const msg = "Acquired Mysterious Artifact! This seems to belong to something ancient...";
+        this.bannerMessage = msg;
+        this.onBannerMessage?.(msg);
+        setTimeout(() => {
+          if (this.bannerMessage === msg) {
+            this.bannerMessage = null;
+            this.onBannerMessage?.(null);
+          }
+        }, 4000);
         break;
       }
       case 'radio': {
@@ -2762,6 +2954,134 @@ export class HorrorEngine {
           break;
         }
 
+        // New collectible item meshes
+        case 'matches': {
+          const matchesGroup = new THREE.Group();
+          const boxMat = new THREE.MeshStandardMaterial({ color: 0xc2410c, roughness: 0.6 });
+          const box = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.04), boxMat);
+          box.position.y = 0.06;
+          matchesGroup.add(box);
+          mesh = matchesGroup;
+          break;
+        }
+
+        case 'compass': {
+          const compassGroup = new THREE.Group();
+          const brassMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3, metalness: 0.85 });
+          const caseMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.02, 16), brassMat);
+          caseMesh.position.y = 0.01;
+          compassGroup.add(caseMesh);
+          const glass = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.035, 0.035, 0.005, 16),
+            new THREE.MeshStandardMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.5, roughness: 0.1 })
+          );
+          glass.position.y = 0.02;
+          compassGroup.add(glass);
+          mesh = compassGroup;
+          break;
+        }
+
+        case 'rope': {
+          const ropeGroup = new THREE.Group();
+          const ropeMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.9 });
+          const coil = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 8, 16), ropeMat);
+          coil.rotation.x = Math.PI / 2;
+          coil.position.y = 0.1;
+          ropeGroup.add(coil);
+          mesh = ropeGroup;
+          break;
+        }
+
+        case 'medkit': {
+          const medkitGroup = new THREE.Group();
+          const kitMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+          const kit = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.06), kitMat);
+          kit.position.y = 0.04;
+          medkitGroup.add(kit);
+          const crossMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+          const cross = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.01), crossMat);
+          cross.position.set(0, 0.08, 0.04);
+          medkitGroup.add(cross);
+          mesh = medkitGroup;
+          break;
+        }
+
+        case 'rations': {
+          const rationsGroup = new THREE.Group();
+          const canMat = new THREE.MeshStandardMaterial({ color: 0x78716c, roughness: 0.6, metalness: 0.4 });
+          const can = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1, 12), canMat);
+          can.position.y = 0.05;
+          rationsGroup.add(can);
+          mesh = rationsGroup;
+          break;
+        }
+
+        case 'flashlight_bulb': {
+          const bulbGroup = new THREE.Group();
+          const glassMat = new THREE.MeshStandardMaterial({ color: 0xfef3c7, transparent: true, opacity: 0.8, roughness: 0.1 });
+          const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 12), glassMat);
+          bulb.position.y = 0.03;
+          bulbGroup.add(bulb);
+          const baseMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.7, metalness: 0.3 });
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.02, 8), baseMat);
+          base.position.y = 0.01;
+          bulbGroup.add(base);
+          mesh = bulbGroup;
+          break;
+        }
+
+        case 'whistle': {
+          const whistleGroup = new THREE.Group();
+          const metalMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3, metalness: 0.85 });
+          const whistle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.08, 12), metalMat);
+          whistle.rotation.z = Math.PI / 2;
+          whistle.position.y = 0.04;
+          whistleGroup.add(whistle);
+          mesh = whistleGroup;
+          break;
+        }
+
+        case 'crowbar': {
+          const crowbarGroup = new THREE.Group();
+          const metalMat = new THREE.MeshStandardMaterial({ color: 0x57534e, roughness: 0.6, metalness: 0.7 });
+          const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.3, 8), metalMat);
+          bar.rotation.z = Math.PI / 2;
+          bar.position.y = 0.15;
+          crowbarGroup.add(bar);
+          const hook = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.015, 8, 16, Math.PI), metalMat);
+          hook.position.set(0.12, 0.15, 0);
+          crowbarGroup.add(hook);
+          mesh = crowbarGroup;
+          break;
+        }
+
+        case 'key': {
+          const keyGroup = new THREE.Group();
+          const metalMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3, metalness: 0.85 });
+          const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.08, 8), metalMat);
+          shaft.position.y = 0.04;
+          keyGroup.add(shaft);
+          const head = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.008, 8, 16), metalMat);
+          head.position.set(0, 0.08, 0);
+          keyGroup.add(head);
+          mesh = keyGroup;
+          break;
+        }
+
+        case 'ancient_artifact': {
+          const artifactGroup = new THREE.Group();
+          const stoneMat = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.8 });
+          const artifact = new THREE.Mesh(new THREE.DodecahedronGeometry(0.06, 0), stoneMat);
+          artifact.position.y = 0.06;
+          artifactGroup.add(artifact);
+          const glowMat = new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.3 });
+          const glow = new THREE.Mesh(new THREE.DodecahedronGeometry(0.08, 0), glowMat);
+          glow.position.y = 0.06;
+          artifactGroup.add(glow);
+          mesh = artifactGroup;
+          break;
+        }
+
         case 'locker': {
           // Realistic Weathered Wooden Hunting Blind / Hiding Bunker
           const blindGroup = new THREE.Group();
@@ -4385,6 +4705,17 @@ export class HorrorEngine {
       flares: 1,
       hasMap: false,
       notesRead: [],
+      // New collectible items
+      matches: 5,
+      compass: false,
+      rope: false,
+      medkit: 1,
+      rations: 2,
+      flashlightBulb: false,
+      whistle: false,
+      crowbar: false,
+      keys: 0,
+      ancientArtifact: 0,
     };
     this.flashlightState = {
       enabled: true,

@@ -28,7 +28,18 @@ export interface InteractableItem {
     | 'radio_tube' // Vacuum Tube for Ranger Ham Radio
     | 'fuel_can' // 5-Gallon Heavy Diesel Canister
     | 'map'
-    | 'truck_hood'; // Abandoned pickup engine bay
+    | 'truck_hood' // Abandoned pickup engine bay
+    // New collectible items
+    | 'matches' // Waterproof matches
+    | 'compass' // Navigation compass
+    | 'rope' // Climbing rope
+    | 'medkit' // Medical supplies
+    | 'rations' // Food rations
+    | 'flashlight_bulb' // Spare flashlight bulb
+    | 'whistle' // Emergency whistle
+    | 'crowbar' // Opening tool
+    | 'key' // Miscellaneous keys
+    | 'ancient_artifact' // Mysterious artifacts;
   position: THREE.Vector3;
   label: string;
   loreNote?: LoreNote;
@@ -339,6 +350,68 @@ export function getFacilityLayout() {
       type: 'flare',
       position: new THREE.Vector3(37, 0.02, -3),
       label: 'Take Emergency Magnesium Flare [E] (Ignite with [X])',
+    },
+
+    // New collectible items
+    {
+      id: 'item_matches',
+      type: 'matches',
+      position: new THREE.Vector3(-15, 0.5, -30),
+      label: 'Take Waterproof Matches [E]',
+    },
+    {
+      id: 'item_compass',
+      type: 'compass',
+      position: new THREE.Vector3(32, 0.7, -8),
+      label: 'Take Compass [E]',
+    },
+    {
+      id: 'item_rope',
+      type: 'rope',
+      position: new THREE.Vector3(-40, 0.4, 15),
+      label: 'Take Climbing Rope [E]',
+    },
+    {
+      id: 'item_medkit',
+      type: 'medkit',
+      position: new THREE.Vector3(12, 0.6, -35),
+      label: 'Take Medical Kit [E]',
+    },
+    {
+      id: 'item_rations',
+      type: 'rations',
+      position: new THREE.Vector3(-25, 0.5, -18),
+      label: 'Take Food Rations [E]',
+    },
+    {
+      id: 'item_flashlight_bulb',
+      type: 'flashlight_bulb',
+      position: new THREE.Vector3(2, 0.8, -42),
+      label: 'Take Spare Flashlight Bulb [E]',
+    },
+    {
+      id: 'item_whistle',
+      type: 'whistle',
+      position: new THREE.Vector3(-33, 0.5, -12),
+      label: 'Take Emergency Whistle [E]',
+    },
+    {
+      id: 'item_crowbar',
+      type: 'crowbar',
+      position: new THREE.Vector3(18, 0.6, -20),
+      label: 'Take Crowbar [E]',
+    },
+    {
+      id: 'item_key_1',
+      type: 'key',
+      position: new THREE.Vector3(-45, 0.4, 8),
+      label: 'Take Old Key [E]',
+    },
+    {
+      id: 'item_ancient_artifact_1',
+      type: 'ancient_artifact',
+      position: new THREE.Vector3(40, 0.5, 20),
+      label: 'Take Mysterious Artifact [E]',
     },
 
     // Wooden Hunting Blinds / Shelters (Enter with [E] to conceal yourself and mute breath)

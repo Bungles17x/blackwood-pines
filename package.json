@@ -1,21 +1,30 @@
 {
-  "name": "react-example",
+  "name": "blackwood-pines",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "main": "electron-main.cjs",
+  "homepage": "https://github.com/Bungles17x/blackwood-pines",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
     "serve": "vite preview --port=3000 --host=0.0.0.0",
     "clean": "if exist dist rmdir /s /q dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "electron": "electron .",
+    "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "dist": "npm run build && electron-builder",
+    "dist-win": "npm run build && electron-builder --win"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
+    "electron-updater": "^6.8.9",
     "express": "^4.21.2",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
@@ -31,10 +40,40 @@
     "@types/react-dom": "^19.2.7",
     "@types/three": "^0.185.4",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.2.4",
     "esbuild": "^0.25.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "wait-on": "^8.0.5"
+  },
+  "build": {
+    "appId": "com.blackwoodpines.game",
+    "productName": "Blackwood-Pines",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron-main.cjs",
+      "preload.cjs",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "Bungles17x",
+      "repo": "blackwood-pines"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

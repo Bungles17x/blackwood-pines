@@ -9,6 +9,8 @@ import { VictoryModal } from './components/VictoryModal';
 import { NoteModal } from './components/NoteModal';
 import { CCTVModal } from './components/CCTVModal';
 import { MapModal } from './components/MapModal';
+import { MobileControls } from './components/MobileControls';
+import { UpdateModal } from './components/UpdateModal';
 import {
   GameState,
   Inventory,
@@ -20,6 +22,7 @@ import {
   SurvivalVitals,
 } from './types';
 import { horrorAudio } from './audio/horrorAudio';
+import { saveGame, loadGame, hasSaveGame } from './utils/saveSystem';
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -39,6 +42,8 @@ export default function App() {
   const [isDying, setIsDying] = useState<boolean>(false);
   const [showCctv, setShowCctv] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   // HUD & Stats
   const [inventory, setInventory] = useState<Inventory>({
@@ -54,6 +59,17 @@ export default function App() {
     flares: 1,
     hasMap: false,
     notesRead: [],
+    // New collectible items
+    matches: 5,
+    compass: false,
+    rope: false,
+    medkit: 1,
+    rations: 2,
+    flashlightBulb: false,
+    whistle: false,
+    crowbar: false,
+    keys: 0,
+    ancientArtifact: 0,
   });
 
   const [flashlight, setFlashlight] = useState<FlashlightState>({
@@ -97,6 +113,25 @@ export default function App() {
     }
     return () => clearInterval(timer);
   }, [gameState]);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 900);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Check for updates in Electron
+  useEffect(() => {
+    // Only show update modal if running in Electron (not in browser)
+    if (typeof window !== 'undefined' && window.electronAPI) {
+      setShowUpdateModal(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (staminaHideTimerRef.current !== null) {
@@ -366,6 +401,65 @@ export default function App() {
     }
   };
 
+  // Save game
+  const handleSaveGame = () => {
+    if (!engineRef.current) return;
+    
+    const saveData = {
+      timestamp: Date.now(),
+      timeSurvived: timeSurvivedSeconds,
+      inventory,
+      flashlight,
+      notesRead: inventory.notesRead,
+      playerPosition: engineRef.current ? {
+        x: engineRef.current.playerPosition.x,
+        y: engineRef.current.playerPosition.y,
+        z: engineRef.current.playerPosition.z,
+      } : { x: -1, y: 1.65, z: -20 },
+      isPowerRestored: engineRef.current?.isPowerRestored ?? false,
+      chapterId: currentChapterId,
+    };
+
+    const success = saveGame(saveData);
+    if (success) {
+      setBannerMessage('Game saved successfully!');
+      setTimeout(() => setBannerMessage(null), 3000);
+    } else {
+      setBannerMessage('Failed to save game');
+      setTimeout(() => setBannerMessage(null), 3000);
+    }
+  };
+
+  // Load game
+  const handleLoadGame = () => {
+    const saveData = loadGame();
+    if (!saveData) {
+      setBannerMessage('No save data found');
+      setTimeout(() => setBannerMessage(null), 3000);
+      return;
+    }
+
+    // Restore game state
+    setInventory(saveData.inventory);
+    setFlashlight(saveData.flashlight);
+    setTimeSurvivedSeconds(saveData.timeSurvived);
+    setCurrentChapterId(saveData.chapterId);
+
+    // Reset and restore engine state
+    if (engineRef.current) {
+      engineRef.current.resetGame(saveData.chapterId);
+      const pos = saveData.playerPosition || { x: -1, y: 1.65, z: -20 };
+      engineRef.current.playerPosition.set(pos.x, pos.y, pos.z);
+      engineRef.current.isPowerRestored = saveData.isPowerRestored;
+      engineRef.current.start();
+      triggerChapterAnnouncement(saveData.chapterId);
+    }
+
+    setGameState('PLAYING');
+    setBannerMessage('Game loaded successfully!');
+    setTimeout(() => setBannerMessage(null), 3000);
+  };
+
   const handlePauseGame = () => {
     if (!engineRef.current || gameState !== 'PLAYING') return;
     engineRef.current.pause();
@@ -407,17 +501,20 @@ export default function App() {
     setIsHiding(false);
     setIsDying(false);
     setActiveLean(null);
-    engineRef.current.resetGame(1);
+    if (engineRef.current) {
+      engineRef.current.resetGame(1);
+    }
     setGameState('PLAYING');
     horrorAudio.init();
-    engineRef.current.start();
-    triggerChapterAnnouncement(1);
-
-    try {
-      engineRef.current.renderer.domElement.requestPointerLock();
-    } catch {
-      // Browser may require user gesture on canvas
+    if (engineRef.current) {
+      engineRef.current.start();
+      try {
+        engineRef.current.renderer.domElement.requestPointerLock();
+      } catch {
+        // Browser may require user gesture on canvas
+      }
     }
+    triggerChapterAnnouncement(1);
   };
 
   const activeChapterData =
@@ -458,47 +555,73 @@ export default function App() {
 
       {/* In-Game HUD overlay */}
       {(gameState === 'PLAYING' || isDying) && (
-        <HUD
-          flashlight={flashlight}
-          inventory={inventory}
-          stamina={stamina}
-          showStamina={showStamina}
-          distanceToMonster={distanceToMonster}
-          hearingLevel={hearingLevel}
-          hearingColor={hearingColor}
-          prompt={interactPrompt}
-          bannerMessage={bannerMessage}
-          isDying={isDying}
-          isPowerRestored={engineRef.current?.isPowerRestored ?? false}
-          isPlayerHiding={isHiding}
-          isCrouching={isCrouching}
-          activeLean={activeLean}
-          isHoldingBreath={isHoldingBreath}
-          breathHoldRatio={breathHoldRatio}
-          vitals={survivalVitals}
-          isFlashlightTappable={isFlashlightTappable}
-          onTapFlashlight={() => engineRef.current?.tapFlashlight()}
-          onHoldBreath={(h) => engineRef.current?.setHoldingBreath(h)}
-          onToggleFlashlight={() => engineRef.current?.toggleFlashlight()}
-          onToggleUV={() => engineRef.current?.toggleUVMode()}
-          onUseBattery={() => engineRef.current?.useBattery()}
-          onThrowBottle={() => engineRef.current?.throwBottle()}
-          onUseFlare={() => engineRef.current?.useFlare()}
-          onOpenMap={() => {
-            setShowMap(true);
-            engineRef.current?.setModalOpen(true);
-          }}
-          onInteract={() => engineRef.current?.interact()}
-          onPause={handlePauseGame}
-          onJump={() => {
-            engineRef.current?.jump();
-          }}
-          onToggleCrouch={() => engineRef.current?.toggleCrouch()}
-          onHoldSprint={(sprinting) => {
-            engineRef.current?.setSprinting(sprinting);
-          }}
-          onVirtualMove={(f, b, l, r) => engineRef.current?.setVirtualMove(f, b, l, r)}
-        />
+        <>
+          <HUD
+            flashlight={flashlight}
+            inventory={inventory}
+            stamina={stamina}
+            showStamina={showStamina}
+            distanceToMonster={distanceToMonster}
+            hearingLevel={hearingLevel}
+            hearingColor={hearingColor}
+            prompt={interactPrompt}
+            bannerMessage={bannerMessage}
+            isDying={isDying}
+            isPowerRestored={engineRef.current?.isPowerRestored ?? false}
+            isPlayerHiding={isHiding}
+            isCrouching={isCrouching}
+            activeLean={activeLean}
+            isHoldingBreath={isHoldingBreath}
+            breathHoldRatio={breathHoldRatio}
+            vitals={survivalVitals}
+            isFlashlightTappable={isFlashlightTappable}
+            onTapFlashlight={() => engineRef.current?.tapFlashlight()}
+            onHoldBreath={(h) => engineRef.current?.setHoldingBreath(h)}
+            onToggleFlashlight={() => engineRef.current?.toggleFlashlight()}
+            onToggleUV={() => engineRef.current?.toggleUVMode()}
+            onUseBattery={() => engineRef.current?.useBattery()}
+            onThrowBottle={() => engineRef.current?.throwBottle()}
+            onUseFlare={() => engineRef.current?.useFlare()}
+            onOpenMap={() => {
+              setShowMap(true);
+              engineRef.current?.setModalOpen(true);
+            }}
+            onInteract={() => engineRef.current?.interact()}
+            onPause={handlePauseGame}
+            onJump={() => {
+              engineRef.current?.jump();
+            }}
+            onToggleCrouch={() => engineRef.current?.toggleCrouch()}
+            onHoldSprint={(sprinting) => {
+              engineRef.current?.setSprinting(sprinting);
+            }}
+            onVirtualMove={(f, b, l, r) => engineRef.current?.setVirtualMove(f, b, l, r)}
+          />
+          <MobileControls
+            isMobile={isMobile}
+            onMove={(x, y) => {
+              // Convert joystick input to movement
+              engineRef.current?.setVirtualMove(y > 0, y < 0, x < 0, x > 0);
+            }}
+            onAction={(action) => {
+              switch (action) {
+                case 'interact':
+                  engineRef.current?.interact();
+                  break;
+                case 'flashlight':
+                  engineRef.current?.toggleFlashlight();
+                  break;
+                case 'sprint':
+                  engineRef.current?.setSprinting(true);
+                  break;
+                case 'crouch':
+                  engineRef.current?.toggleCrouch();
+                  break;
+              }
+            }}
+            onPause={handlePauseGame}
+          />
+        </>
       )}
 
       {/* CCTV Security Feed Monitor Modal */}
@@ -546,6 +669,8 @@ export default function App() {
           currentChapter={activeChapterData}
           settings={settings}
           onUpdateSettings={updateSettings}
+          onSaveGame={handleSaveGame}
+          onLoadGame={handleLoadGame}
         />
       )}
 
@@ -568,6 +693,12 @@ export default function App() {
           timeTakenSeconds={timeSurvivedSeconds}
         />
       )}
+
+      {/* Auto-Update Modal */}
+      <UpdateModal
+        isVisible={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+      />
     </div>
   );
 }
