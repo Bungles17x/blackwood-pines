@@ -165,7 +165,10 @@ Write-Host ""
 Write-Host "Step 4: Creating Windows executable and publishing to GitHub..." -ForegroundColor Yellow
 Write-Host ""
 
-npm run dist-win
+# Use a fresh staging directory so Windows file locks cannot block a previous win-unpacked folder.
+$buildOutput = "release/build-$((Get-Date).ToString('yyyyMMdd-HHmmssfff'))"
+Write-Host "Using fresh Electron Builder output: $buildOutput" -ForegroundColor Yellow
+npm run dist-win -- --config.directories.output="$buildOutput"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
