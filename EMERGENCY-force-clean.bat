@@ -1,5 +1,22 @@
 @echo off
-echo Attempting to force-clean release folder...
+title Blackwood Pines - EMERGENCY CLEAN ADMIN PANEL
+
+echo ================================================
+echo Blackwood Pines - EMERGENCY CLEAN ADMIN PANEL
+echo ================================================
+echo.
+
+:TOKEN_INPUT
+set /p "GITHUB_PAT=Enter your GitHub Personal Access Token: "
+if "%GITHUB_PAT%"=="" (
+    echo.
+    echo [ERROR] Token cannot be empty. Please try again.
+    echo.
+    goto TOKEN_INPUT
+)
+
+echo.
+echo Token accepted. Proceeding with cleanup...
 echo.
 
 echo Step 1: Checking for running processes...
