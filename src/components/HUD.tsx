@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlashlightState, Inventory, SurvivalVitals } from '../types';
-import { Battery, BatteryCharging, Key, Zap, FileText, Eye, Radio, Wine, Flame, Map, Shield, Sun, Fuel, Wind, Thermometer, Pause } from 'lucide-react';
+import { Battery, BatteryCharging, Key, Zap, FileText, Eye, Radio, Wine, Flame, Map, Shield, Sun, Fuel, Wind, Thermometer, Pause, Compass, HeartPulse, Utensils, Sparkles } from 'lucide-react';
 
 interface HUDProps {
   flashlight: FlashlightState;
@@ -35,6 +35,9 @@ interface HUDProps {
   onToggleCrouch?: () => void;
   onHoldSprint?: (sprinting: boolean) => void;
   onVirtualMove?: (f: boolean, b: boolean, l: boolean, r: boolean) => void;
+  compassHeading?: { deg: number; cardinal: string } | null;
+  onUseMedkit?: () => void;
+  onUseRations?: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -70,6 +73,9 @@ export const HUD: React.FC<HUDProps> = ({
   onToggleCrouch,
   onHoldSprint,
   onVirtualMove,
+  compassHeading,
+  onUseMedkit,
+  onUseRations,
 }) => {
   // Calculate EMF Signal Level (1 to 5 bars) based purely on creature distance
   const emfLevel = distanceToMonster < 6 ? 5 : distanceToMonster < 10 ? 4 : distanceToMonster < 15 ? 3 : distanceToMonster < 20 ? 2 : distanceToMonster < 25 ? 1 : 0;
@@ -275,6 +281,17 @@ export const HUD: React.FC<HUDProps> = ({
                   {vitals.windHeading} {vitals.windSpeedMph} MPH
                 </span>
               </div>
+            </div>
+          )}
+
+          {/* Navigational Field Compass */}
+          {inventory.compass && compassHeading && (
+            <div className="flex items-center gap-2 bg-black/70 backdrop-blur-md border border-emerald-500/40 px-3 py-1.5 rounded-lg text-xs shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+              <Compass className="h-3.5 w-3.5 text-emerald-400 animate-spin-slow" />
+              <span className="text-[10px] text-zinc-400 font-bold">BEARING:</span>
+              <span className="text-[11px] font-mono font-bold text-emerald-300">
+                {compassHeading.cardinal} ({compassHeading.deg}°)
+              </span>
             </div>
           )}
         </div>
@@ -521,6 +538,39 @@ export const HUD: React.FC<HUDProps> = ({
               <span className="font-bold text-white">{inventory.notesRead.length} / 5</span>
             </div>
           </div>
+
+          {/* Medkit slot */}
+          {inventory.medkit > 0 && (
+            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-red-950/40 border border-red-800/60 shrink-0" title="First Aid Medkits [Z]">
+              <HeartPulse className="h-4 w-4 text-red-400" />
+              <div className="flex flex-col text-[9px]">
+                <span className="text-zinc-400">MEDKIT</span>
+                <span className="font-bold text-red-300">{inventory.medkit}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Rations slot */}
+          {inventory.rations > 0 && (
+            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-amber-950/40 border border-amber-800/60 shrink-0" title="Emergency Rations [U]">
+              <Utensils className="h-4 w-4 text-amber-400" />
+              <div className="flex flex-col text-[9px]">
+                <span className="text-zinc-400">RATIONS</span>
+                <span className="font-bold text-amber-300">{inventory.rations}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Ancient Artifact slot */}
+          {inventory.ancientArtifact > 0 && (
+            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-purple-950/40 border border-purple-800/60 shrink-0" title="Ancient Forest Relic">
+              <Sparkles className="h-4 w-4 text-purple-400 animate-pulse" />
+              <div className="flex flex-col text-[9px]">
+                <span className="text-zinc-400">RELIC</span>
+                <span className="font-bold text-purple-300">{inventory.ancientArtifact}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Quick Touch Controls for Mobile/Trackpad */}
@@ -555,6 +605,28 @@ export const HUD: React.FC<HUDProps> = ({
               className="px-3 py-2 rounded-lg border border-orange-600 bg-orange-950/60 text-orange-300 text-xs font-semibold cursor-pointer transition-all"
             >
               FLARE [X]
+            </button>
+          )}
+          {inventory.medkit > 0 && (
+            <button
+              id="hud-medkit-btn"
+              onClick={onUseMedkit}
+              disabled={isDying}
+              className="px-3 py-2 rounded-lg border border-red-600 bg-red-950/60 text-red-300 text-xs font-semibold cursor-pointer transition-all hover:bg-red-900/80"
+              title="Apply Trauma Kit [Z]"
+            >
+              HEAL [Z] ({inventory.medkit})
+            </button>
+          )}
+          {inventory.rations > 0 && (
+            <button
+              id="hud-rations-btn"
+              onClick={onUseRations}
+              disabled={isDying}
+              className="px-3 py-2 rounded-lg border border-amber-600 bg-amber-950/60 text-amber-300 text-xs font-semibold cursor-pointer transition-all hover:bg-amber-900/80"
+              title="Consume Field Ration [U]"
+            >
+              EAT [U] ({inventory.rations})
             </button>
           )}
           <button

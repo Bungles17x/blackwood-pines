@@ -10,12 +10,30 @@ Write-Host ""
 Write-Host "Step 0: Pushing code to GitHub..." -ForegroundColor Yellow
 Write-Host ""
 
+# Ensure the remote is pointing to the correct repository
+$remoteUrl = git remote get-url origin 2>$null
+if ($remoteUrl -ne "https://github.com/Bungles17x/blackwood-pines.git") {
+    Write-Host "Setting remote origin to Bungles17x/blackwood-pines..." -ForegroundColor Yellow
+    git remote set-url origin https://github.com/Bungles17x/blackwood-pines.git
+}
+
+# Generate a timestamped commit message
+$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
+$commitMessage = "Update game build - $timestamp"
+
 git add .
-git commit -m "Update auto-update system with in-game notifications" -m "Generated with [Devin](https://devin.ai)" -m "Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>" 2>$null
+$commitOutput = git commit -m $commitMessage 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Committed: $commitMessage" -ForegroundColor Green
+} else {
+    Write-Host "Nothing new to commit, pushing existing HEAD..." -ForegroundColor Yellow
+}
+
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Warning: Git push failed or nothing to push. Continuing with build..." -ForegroundColor Yellow
+    Write-Host "Warning: Git push failed. Check your credentials or branch name." -ForegroundColor Red
+    Write-Host "Continuing with build..." -ForegroundColor Yellow
 } else {
     Write-Host "Code pushed to GitHub successfully!" -ForegroundColor Green
 }

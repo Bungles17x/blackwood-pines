@@ -96,6 +96,11 @@ export const getAchievements = (): AchievementData => {
   }
 };
 
+export const getAchievementById = (id: string): Achievement | undefined => {
+  const data = getAchievements();
+  return data.achievements.find((a) => a.id === id);
+};
+
 export const unlockAchievement = (achievementId: string): boolean => {
   try {
     const data = getAchievements();

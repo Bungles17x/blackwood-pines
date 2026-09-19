@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 
 interface MobileControlsProps {
   onMove: (x: number, y: number) => void;
-  onAction: (action: 'interact' | 'flashlight' | 'sprint' | 'crouch') => void;
+  onAction: (action: 'interact' | 'flashlight' | 'sprint' | 'crouch' | 'medkit' | 'rations') => void;
   onPause: () => void;
   isMobile: boolean;
 }
@@ -125,61 +125,15 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
         />
       </div>
 
-      {/* Action Buttons */}
-      <div className="absolute bottom-24 right-8 flex flex-col gap-3 pointer-events-auto">
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            onAction('flashlight');
-          }}
-          className="w-16 h-16 rounded-full bg-yellow-500/80 border-2 border-yellow-300 flex items-center justify-center text-2xl"
-        >
-          🔦
-        </motion.button>
-        
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            onAction('interact');
-          }}
-          className="w-16 h-16 rounded-full bg-green-500/80 border-2 border-green-300 flex items-center justify-center text-2xl"
-        >
-          ✋
-        </motion.button>
-        
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            onAction('sprint');
-          }}
-          className="w-16 h-16 rounded-full bg-blue-500/80 border-2 border-blue-300 flex items-center justify-center text-2xl"
-        >
-          🏃
-        </motion.button>
-        
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            onAction('crouch');
-          }}
-          className="w-16 h-16 rounded-full bg-purple-500/80 border-2 border-purple-300 flex items-center justify-center text-2xl"
-        >
-          🙇
-        </motion.button>
-      </div>
-
       {/* Pause Button */}
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={onPause}
-        className="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/50 border-2 border-white/30 flex items-center justify-center text-xl pointer-events-auto"
+        className="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/50 border-2 border-white/30 flex items-center justify-center text-white text-xs font-bold pointer-events-auto"
       >
-        ⏸️
+        II
       </motion.button>
     </div>
   );
+
 };

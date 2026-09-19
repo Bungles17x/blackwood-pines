@@ -5,7 +5,7 @@ export type CreatureState = 'DORMANT' | 'PATROL' | 'INVESTIGATE' | 'STALK' | 'CH
 // Electron API types for auto-updater
 export interface ElectronAPI {
   platform: string;
-  onUpdateStatus: (callback: (message: any) => void) => void;
+  onUpdateStatus: (callback: (message: any) => void) => () => void;
   checkForUpdates: () => Promise<void>;
   downloadUpdate: () => Promise<void>;
   installUpdate: () => Promise<void>;
@@ -86,7 +86,9 @@ export interface GameSettings {
   difficulty: 'normal' | 'nightmare' | 'story';
   headBobbing: boolean;
   filmGrain: boolean;
+  fullscreen: boolean;
 }
+
 
 export interface Chapter {
   id: number;

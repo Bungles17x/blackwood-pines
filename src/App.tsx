@@ -103,7 +103,9 @@ export default function App() {
     difficulty: 'normal',
     headBobbing: true,
     filmGrain: true,
+    fullscreen: false,
   });
+
 
   // Track run time
   useEffect(() => {
@@ -127,29 +129,28 @@ export default function App() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Check for updates in Electron
+  // Check for updates in Electron (non-intrusive notification only)
   useEffect(() => {
     // Only check for updates if running in Electron (not in browser)
     if (typeof window !== 'undefined' && window.electronAPI) {
       // Listen for update status
       const cleanup = window.electronAPI.onUpdateStatus((message: any) => {
         if (typeof message === 'object' && message.type === 'update-available') {
-          // Show notification during gameplay
-          if (gameState === 'PLAYING') {
-            setShowUpdateNotification(true);
-          } else {
-            // Show modal on title screen
-            setShowUpdateModal(true);
-          }
+          // Show non-blocking notification button in top right
+          setShowUpdateNotification(true);
         }
       });
 
-      // Initial check on startup
-      window.electronAPI.checkForUpdates();
+      // Initial check on startup (catch any error silently)
+      try {
+        window.electronAPI.checkForUpdates();
+      } catch (err) {
+        console.warn('Initial update check error:', err);
+      }
 
       return cleanup;
     }
-  }, [gameState]);
+  }, []);
 
   useEffect(() => {
     if (staminaHideTimerRef.current !== null) {
@@ -369,9 +370,17 @@ export default function App() {
       if (newSettings.soundVolume !== undefined) {
         horrorAudio.setMasterVolume(newSettings.soundVolume);
       }
+      // Sync fullscreen with Electron window if available
+      if (newSettings.fullscreen !== undefined) {
+        const api = (window as any).electronAPI;
+        if (api?.setFullscreen) {
+          api.setFullscreen(newSettings.fullscreen);
+        }
+      }
       return updated;
     });
   };
+
 
   const revealStamina = () => {
     setShowStamina(true);

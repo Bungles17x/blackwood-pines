@@ -154,6 +154,8 @@ export class HorrorEngine {
       case 'KeyM': this.openMap(); break;
       case 'KeyQ': this.activeLean = 'left'; this.onLeanChange?.('left'); break;
       case 'KeyE': if (this.isPlayerHiding) this.exitLocker(); else if (this.activePrompt) this.interact(); else { this.activeLean = 'right'; this.onLeanChange?.('right'); } break;
+      case 'KeyZ': this.useMedkit(); break;
+      case 'KeyU': this.useRations(); break;
       case 'AltLeft': case 'AltRight': case 'KeyH': this.setHoldingBreath(true); break;
     }
   };
@@ -340,6 +342,7 @@ export class HorrorEngine {
   public onBreathHoldChange?: (isHolding: boolean, ratio: number) => void;
   public onVitalsChange?: (vitals: SurvivalVitals) => void;
   public onFlashlightTappable?: (tappable: boolean) => void;
+  public onCompassHeadingChange?: (headingDeg: number, cardinal: string) => void;
 
   // Realistic Survival Physics & Ambient Environment
   public survivalVitals: SurvivalVitals = {
@@ -797,6 +800,48 @@ export class HorrorEngine {
       position: flarePos,
       timer: 16.0, // burns with incandescent magnesium for 16 seconds
     };
+  }
+
+  // Apply Emergency First Aid Trauma Kit
+  public useMedkit() {
+    if (this.inventory.medkit <= 0 || this.isDying) return;
+    this.inventory.medkit -= 1;
+    this.survivalVitals.bodyTemp = Math.min(100, this.survivalVitals.bodyTemp + 45);
+    this.survivalVitals.isShivering = false;
+    this.stamina = 100;
+    horrorAudio.playHeartbeat();
+    this.onInventoryChange?.({ ...this.inventory });
+    this.onVitalsChange?.({ ...this.survivalVitals });
+    this.onStaminaChange?.(this.stamina);
+    const msg = "Applied trauma dressing & thermal foil. Vitals stabilized.";
+    this.bannerMessage = msg;
+    this.onBannerMessage?.(msg);
+    setTimeout(() => {
+      if (this.bannerMessage === msg) {
+        this.bannerMessage = null;
+        this.onBannerMessage?.(null);
+      }
+    }, 3500);
+  }
+
+  // Consume High-Calorie Field Ration
+  public useRations() {
+    if (this.inventory.rations <= 0 || this.isDying) return;
+    this.inventory.rations -= 1;
+    this.stamina = 100;
+    this.survivalVitals.bodyTemp = Math.min(100, this.survivalVitals.bodyTemp + 20);
+    this.onInventoryChange?.({ ...this.inventory });
+    this.onVitalsChange?.({ ...this.survivalVitals });
+    this.onStaminaChange?.(this.stamina);
+    const msg = "Consumed field ration. Stamina replenished & core warming.";
+    this.bannerMessage = msg;
+    this.onBannerMessage?.(msg);
+    setTimeout(() => {
+      if (this.bannerMessage === msg) {
+        this.bannerMessage = null;
+        this.onBannerMessage?.(null);
+      }
+    }, 3000);
   }
 
   // Realistic magnesium spark particle generation
@@ -3937,6 +3982,14 @@ export class HorrorEngine {
     }
     if (this.vitalsNotifyTimer <= 0) {
       this.onVitalsChange?.({ ...this.survivalVitals });
+      if (this.inventory.compass) {
+        let deg = Math.round(((this.yaw * 180) / Math.PI + 180) % 360);
+        if (deg < 0) deg += 360;
+        const cardinals = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        const cardIndex = Math.round(deg / 45) % 8;
+        const cardinal = cardinals[cardIndex];
+        this.onCompassHeadingChange?.(deg, cardinal);
+      }
       this.vitalsNotifyTimer = 0.15;
     }
 

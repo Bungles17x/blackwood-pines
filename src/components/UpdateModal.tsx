@@ -57,10 +57,18 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isVisible, onClose, on
         setUpdatePhase('checking');
         setTimeout(() => onClose(), 1500);
         break;
-      case 'error':
-        setUpdateStatus(`Error: ${message.data}`);
+      case 'error': {
+        const raw = String(message.data || '');
+        let clean = 'No updates available. You are playing the latest build.';
+        if (raw.includes('net::ERR') || raw.includes('ENOTFOUND') || raw.includes('offline')) {
+          clean = 'Network offline. Could not connect to the update server.';
+        } else if (raw.includes('404') || raw.includes('latest.yml')) {
+          clean = 'You are already running the latest version.';
+        }
+        setUpdateStatus(clean);
         setUpdatePhase('error');
         break;
+      }
       case 'download-progress':
         setUpdateStatus(`Downloading update... ${Math.round(message.data.percent)}%`);
         setUpdatePhase('downloading');
@@ -97,90 +105,90 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isVisible, onClose, on
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border-2 border-red-600 rounded-lg p-8 max-w-md w-full mx-4 max-h-[90vh] flex flex-col">
-        <div className="text-center flex-1 flex flex-col">
-          <div className="mb-4">
-            {updatePhase === 'checking' && (
-              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600 mx-auto"></div>
-            )}
-            {updatePhase === 'available' && (
-              <div className="text-yellow-500 text-5xl">⚠</div>
-            )}
-            {updatePhase === 'downloading' && (
-              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-600 mx-auto"></div>
-            )}
-            {updatePhase === 'ready' && (
-              <div className="text-green-500 text-5xl">✓</div>
-            )}
-            {updatePhase === 'error' && (
-              <div className="text-red-500 text-5xl">✕</div>
-            )}
-          </div>
-
-          <h2 className="text-2xl font-bold text-red-500 mb-4">
-            {updatePhase === 'checking' && 'Checking for Updates...'}
-            {updatePhase === 'available' && 'Update Available'}
-            {updatePhase === 'downloading' && 'Downloading Update...'}
-            {updatePhase === 'ready' && 'Update Ready'}
-            {updatePhase === 'error' && 'Update Error'}
-          </h2>
-
-          <div className="bg-gray-800 rounded-lg p-4 mb-6 flex-1 overflow-y-auto max-h-48 border border-gray-700">
-            <p className="text-gray-300 text-sm whitespace-pre-wrap break-words">
-              {updateStatus}
-            </p>
-            {updateInfo && updatePhase === 'available' && (
-              <div className="mt-4 text-left">
-                <p className="text-gray-400 text-xs mb-2">New version: {updateInfo.version}</p>
-                <p className="text-gray-400 text-xs">Release date: {new Date(updateInfo.releaseDate).toLocaleDateString()}</p>
-              </div>
-            )}
-          </div>
-
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-zinc-900 border-2 border-red-600 rounded-xl p-6 max-w-md w-full shadow-2xl flex flex-col text-center font-mono">
+        <div className="mb-4">
+          {updatePhase === 'checking' && (
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500 mx-auto"></div>
+          )}
           {updatePhase === 'available' && (
-            <div className="space-y-3">
-              {gameState === 'PLAYING' && (
-                <button
-                  onClick={handleSaveAndQuit}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
-                >
-                  Save Game & Update
-                </button>
-              )}
-              <button
-                onClick={handleDownload}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
-              >
-                Download Update
-              </button>
-              <button
-                onClick={onClose}
-                className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
-              >
-                Update Later
-              </button>
-            </div>
+            <div className="text-amber-400 text-4xl">⚠</div>
           )}
-
+          {updatePhase === 'downloading' && (
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          )}
           {updatePhase === 'ready' && (
-            <button
-              onClick={handleInstall}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
-            >
-              Install & Restart
-            </button>
+            <div className="text-emerald-400 text-4xl">✓</div>
           )}
-
           {updatePhase === 'error' && (
-            <button
-              onClick={onClose}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
-            >
-              Close
-            </button>
+            <div className="text-zinc-400 text-4xl">ℹ</div>
           )}
         </div>
+
+        <h2 className="text-xl font-bold text-white mb-3">
+          {updatePhase === 'checking' && 'Checking for Updates...'}
+          {updatePhase === 'available' && 'Update Available'}
+          {updatePhase === 'downloading' && 'Downloading Update...'}
+          {updatePhase === 'ready' && 'Update Ready'}
+          {updatePhase === 'error' && 'Update Status'}
+        </h2>
+
+        <div className="bg-zinc-800/80 rounded-lg p-4 mb-5 text-zinc-300 text-xs leading-relaxed border border-zinc-700">
+          <p className="whitespace-pre-wrap break-words">
+            {updateStatus}
+          </p>
+          {updateInfo && updatePhase === 'available' && (
+            <div className="mt-3 text-left border-t border-zinc-700/60 pt-2 text-[11px] text-zinc-400">
+              <p>New version: <span className="text-zinc-200">{updateInfo.version}</span></p>
+              {updateInfo.releaseDate && (
+                <p>Release date: <span className="text-zinc-200">{new Date(updateInfo.releaseDate).toLocaleDateString()}</span></p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {updatePhase === 'available' && (
+          <div className="space-y-2">
+            {gameState === 'PLAYING' && (
+              <button
+                onClick={handleSaveAndQuit}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded transition-colors text-xs uppercase tracking-wider"
+              >
+                Save Game & Update
+              </button>
+            )}
+            <button
+              onClick={handleDownload}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded transition-colors text-xs uppercase tracking-wider"
+            >
+              Download Update
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-4 rounded transition-colors text-xs uppercase tracking-wider"
+            >
+              Update Later
+            </button>
+          </div>
+        )}
+
+        {updatePhase === 'ready' && (
+          <button
+            onClick={handleInstall}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded transition-colors text-xs uppercase tracking-wider"
+          >
+            Install & Restart
+          </button>
+        )}
+
+        {(updatePhase === 'error' || updatePhase === 'checking') && (
+          <button
+            onClick={onClose}
+            className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-4 rounded transition-colors text-xs uppercase tracking-wider"
+          >
+            Close
+          </button>
+        )}
       </div>
     </div>
   );

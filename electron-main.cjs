@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -15,6 +15,9 @@ try {
 }
 
 function createWindow() {
+  // Remove the native application menu (File/Edit/View/Window bar)
+  Menu.setApplicationMenu(null);
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
@@ -61,7 +64,9 @@ if (autoUpdater) {
   });
 
   autoUpdater.on('error', (err) => {
-    sendStatusToWindow('error', err);
+    console.warn('[AutoUpdater] Update check error (ignored gracefully):', err ? (err.message || err) : 'Unknown error');
+    // Silently log or send simplified message without disruptive modal
+    sendStatusToWindow('error', err ? (err.message || String(err)) : 'Unable to check for updates');
   });
 
   autoUpdater.on('download-progress', (progressObj) => {
@@ -77,7 +82,7 @@ if (autoUpdater) {
 }
 
 function sendStatusToWindow(type, data) {
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
     mainWindow.webContents.send('update-status', { type, data });
   }
 }
@@ -89,7 +94,9 @@ function startPeriodicUpdateChecks() {
   if (autoUpdater && process.env.NODE_ENV !== 'development') {
     updateCheckInterval = setInterval(() => {
       if (autoUpdater) {
-        autoUpdater.checkForUpdates();
+        autoUpdater.checkForUpdates().catch((err) => {
+          console.warn('[AutoUpdater] Periodic check failed:', err?.message || err);
+        });
       }
     }, 5 * 60 * 1000); // 5 minutes
   }
@@ -105,7 +112,11 @@ function stopPeriodicUpdateChecks() {
 // IPC handlers
 ipcMain.handle('check-for-updates', async () => {
   if (autoUpdater) {
-    autoUpdater.checkForUpdates();
+    try {
+      await autoUpdater.checkForUpdates();
+    } catch (err) {
+      console.warn('[AutoUpdater] Check for updates failed:', err?.message || err);
+    }
   } else {
     sendStatusToWindow('error', 'Auto-updater not available');
   }
@@ -113,13 +124,21 @@ ipcMain.handle('check-for-updates', async () => {
 
 ipcMain.handle('download-update', async () => {
   if (autoUpdater && updateAvailable) {
-    autoUpdater.downloadUpdate();
+    try {
+      await autoUpdater.downloadUpdate();
+    } catch (err) {
+      console.warn('[AutoUpdater] Download failed:', err?.message || err);
+    }
   }
 });
 
 ipcMain.handle('install-update', async () => {
   if (autoUpdater) {
-    autoUpdater.quitAndInstall();
+    try {
+      autoUpdater.quitAndInstall();
+    } catch (err) {
+      console.warn('[AutoUpdater] Install failed:', err?.message || err);
+    }
   }
 });
 
@@ -139,11 +158,35 @@ ipcMain.handle('stop-update-checks', async () => {
   stopPeriodicUpdateChecks();
 });
 
+// Fullscreen IPC handlers
+ipcMain.handle('toggle-fullscreen', async () => {
+  if (mainWindow) {
+    const isFullscreen = mainWindow.isFullScreen();
+    mainWindow.setFullScreen(!isFullscreen);
+    return !isFullscreen;
+  }
+  return false;
+});
+
+ipcMain.handle('set-fullscreen', async (event, enable) => {
+  if (mainWindow) {
+    mainWindow.setFullScreen(enable);
+    return enable;
+  }
+  return false;
+});
+
+ipcMain.handle('is-fullscreen', async () => {
+  return mainWindow ? mainWindow.isFullScreen() : false;
+});
+
 app.on('ready', () => {
   createWindow();
   // Check for updates on startup (only in production and if auto-updater is available)
   if (process.env.NODE_ENV !== 'development' && autoUpdater) {
-    autoUpdater.checkForUpdates();
+    autoUpdater.checkForUpdates().catch((err) => {
+      console.warn('[AutoUpdater] Startup check failed:', err?.message || err);
+    });
   }
 });
 

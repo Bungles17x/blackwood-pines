@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, RotateCcw, Volume2, Sliders, X, Home, BookOpen, MapPin, Compass, Save, Download } from 'lucide-react';
+import { Play, RotateCcw, Volume2, Sliders, X, Home, BookOpen, MapPin, Compass, Save, Download, Maximize, Minimize } from 'lucide-react';
 import { Chapter, GameSettings } from '../types';
 import { horrorAudio } from '../audio/horrorAudio';
 import { hasSaveGame, getSaveInfo } from '../utils/saveSystem';
@@ -234,12 +234,33 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({
               {settings.headBobbing ? 'ENABLED' : 'DISABLED'}
             </button>
           </div>
+
+          {/* Fullscreen toggle */}
+          <div className="flex items-center justify-between text-xs text-zinc-400 pt-1">
+            <div className="flex items-center gap-1.5">
+              {settings.fullscreen
+                ? <Minimize className="h-3 w-3 text-emerald-400" />
+                : <Maximize className="h-3 w-3 text-emerald-400" />}
+              <span>FULLSCREEN MODE</span>
+            </div>
+            <button
+              onClick={() => onUpdateSettings({ fullscreen: !settings.fullscreen })}
+              className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                settings.fullscreen
+                  ? 'bg-emerald-950 border-emerald-600 text-emerald-300'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-500'
+              }`}
+            >
+              {settings.fullscreen ? 'ON' : 'OFF'}
+            </button>
+          </div>
         </div>
 
         {/* Controls Cheatsheet */}
         <div className="pause-cheatsheet text-[11px] text-zinc-500 space-y-1 pt-2 border-t border-zinc-900">
           <p>[F] Tactical Light • [T] UV Blacklight • [Shift] Sprint</p>
           <p>[C] Stealth Crouch • [G] Glass Distraction • [X] Flare</p>
+          <p>[Z] Medkit • [U] Rations • [E] Interact • [M] Map</p>
         </div>
       </div>
     </div>
