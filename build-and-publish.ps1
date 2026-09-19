@@ -6,6 +6,41 @@ Write-Host "Blackwood Pines - Build and Publish to GitHub" -ForegroundColor Cyan
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
 
+# ── PIN GATE ──────────────────────────────────────────────────────────────────
+$CORRECT_HASH = "e9a460b9dd621295d6929c485cd6c7ab543fa6883b2ccde91482b311c3b2cef6"
+$maxAttempts  = 3
+$attempt      = 0
+$unlocked     = $false
+
+while ($attempt -lt $maxAttempts) {
+    $attempt++
+    $pinInput  = Read-Host "Enter PIN to continue" -AsSecureString
+    $pinPlain  = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                    [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($pinInput))
+    $pinBytes  = [System.Text.Encoding]::UTF8.GetBytes($pinPlain)
+    $pinHash   = ([System.Security.Cryptography.SHA256]::Create().ComputeHash($pinBytes) |
+                    ForEach-Object { $_.ToString("x2") }) -join ""
+
+    if ($pinHash -eq $CORRECT_HASH) {
+        $unlocked = $true
+        Write-Host "Access granted." -ForegroundColor Green
+        Write-Host ""
+        break
+    } else {
+        $remaining = $maxAttempts - $attempt
+        if ($remaining -gt 0) {
+            Write-Host "Incorrect PIN. $remaining attempt(s) remaining." -ForegroundColor Red
+        }
+    }
+}
+
+if (-not $unlocked) {
+    Write-Host "Access denied. Exiting." -ForegroundColor Red
+    Start-Sleep -Seconds 2
+    exit 1
+}
+# ─────────────────────────────────────────────────────────────────────────────
+
 # Step 0: Push code to GitHub
 Write-Host "Step 0: Pushing code to GitHub..." -ForegroundColor Yellow
 Write-Host ""
