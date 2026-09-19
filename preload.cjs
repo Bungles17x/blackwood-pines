@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installUpdate: () => ipcRenderer.invoke('install-update'),
   isUpdateAvailable: () => ipcRenderer.invoke('is-update-available'),
   getUpdateInfo: () => ipcRenderer.invoke('get-update-info'),
+  getUpdateState: () => ipcRenderer.invoke('get-update-state'),
   startUpdateChecks: () => ipcRenderer.invoke('start-update-checks'),
   stopUpdateChecks: () => ipcRenderer.invoke('stop-update-checks'),
   // Fullscreen controls
@@ -19,4 +20,3 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setFullscreen: (enable) => ipcRenderer.invoke('set-fullscreen', enable),
   isFullscreen: () => ipcRenderer.invoke('is-fullscreen'),
 });
-

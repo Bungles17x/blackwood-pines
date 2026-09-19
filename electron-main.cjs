@@ -4,8 +4,12 @@ const path = require('path');
 let mainWindow;
 let autoUpdater = null;
 let updateCheckInterval = null;
+let updateCheckPromise = null;
+let updateDownloadPromise = null;
 let updateAvailable = false;
 let updateInfo = null;
+let updateStatus = { type: 'idle', data: null };
+const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 
 // Try to load electron-updater, but don't fail if it's not available
 try {
@@ -30,7 +34,7 @@ function createWindow() {
   });
 
   // Load the game
-  if (process.env.NODE_ENV === 'development') {
+  if (!app.isPackaged) {
     mainWindow.loadURL('http://localhost:3000');
     mainWindow.webContents.openDevTools();
   } else {
@@ -45,60 +49,85 @@ function createWindow() {
 // Auto-updater configuration and events (only if available)
 if (autoUpdater) {
   // Feed URL is automatically configured by electron-builder from package.json publish config
-  autoUpdater.autoDownload = false; // Don't auto-download, let user choose
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.allowPrerelease = false;
 
   // Auto-updater events
   autoUpdater.on('checking-for-update', () => {
-    sendStatusToWindow('checking-for-update');
+    setUpdateStatus('checking-for-update');
   });
 
   autoUpdater.on('update-available', (info) => {
     updateAvailable = true;
     updateInfo = info;
-    sendStatusToWindow('update-available', info);
+    setUpdateStatus('update-available', info);
   });
 
-  autoUpdater.on('update-not-available', (info) => {
+  autoUpdater.on('update-not-available', () => {
     updateAvailable = false;
-    sendStatusToWindow('update-not-available');
+    updateInfo = null;
+    setUpdateStatus('update-not-available');
   });
 
   autoUpdater.on('error', (err) => {
-    console.warn('[AutoUpdater] Update check error (ignored gracefully):', err ? (err.message || err) : 'Unknown error');
-    // Silently log or send simplified message without disruptive modal
-    sendStatusToWindow('error', err ? (err.message || String(err)) : 'Unable to check for updates');
+    const message = err ? (err.message || String(err)) : 'Unable to check for updates';
+    console.warn('[AutoUpdater] Update check error:', message);
+    setUpdateStatus('error', message);
   });
 
   autoUpdater.on('download-progress', (progressObj) => {
-    let log_message = "Download speed: " + progressObj.bytesPerSecond;
-    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
-    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
-    sendStatusToWindow('download-progress', progressObj);
+    setUpdateStatus('download-progress', progressObj);
   });
 
   autoUpdater.on('update-downloaded', (info) => {
-    sendStatusToWindow('update-downloaded', info);
+    updateAvailable = true;
+    updateInfo = info;
+    setUpdateStatus('update-downloaded', info);
   });
 }
 
-function sendStatusToWindow(type, data) {
+function sendStatusToWindow(type, data = null) {
   if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
     mainWindow.webContents.send('update-status', { type, data });
   }
 }
 
+function setUpdateStatus(type, data = null) {
+  updateStatus = { type, data };
+  sendStatusToWindow(type, data);
+}
+
+function isUpdaterEnabled() {
+  return Boolean(autoUpdater && app.isPackaged);
+}
+
+function checkForUpdates() {
+  if (!isUpdaterEnabled() || updateDownloadPromise || updateStatus.type === 'download-progress' || updateStatus.type === 'update-downloaded') {
+    return Promise.resolve(null);
+  }
+  if (updateCheckPromise) return updateCheckPromise;
+
+  updateCheckPromise = autoUpdater.checkForUpdates()
+    .catch((err) => {
+      console.warn('[AutoUpdater] Check failed:', err?.message || err);
+      return null;
+    })
+    .finally(() => {
+      updateCheckPromise = null;
+    });
+
+  return updateCheckPromise;
+}
+
 // Start periodic update checks (every 5 minutes during gameplay)
 function startPeriodicUpdateChecks() {
-  if (updateCheckInterval) clearInterval(updateCheckInterval);
-  
-  if (autoUpdater && process.env.NODE_ENV !== 'development') {
+  stopPeriodicUpdateChecks();
+
+  if (isUpdaterEnabled()) {
     updateCheckInterval = setInterval(() => {
-      if (autoUpdater) {
-        autoUpdater.checkForUpdates().catch((err) => {
-          console.warn('[AutoUpdater] Periodic check failed:', err?.message || err);
-        });
-      }
-    }, 5 * 60 * 1000); // 5 minutes
+      void checkForUpdates();
+    }, UPDATE_CHECK_INTERVAL_MS);
   }
 }
 
@@ -111,34 +140,40 @@ function stopPeriodicUpdateChecks() {
 
 // IPC handlers
 ipcMain.handle('check-for-updates', async () => {
-  if (autoUpdater) {
-    try {
-      await autoUpdater.checkForUpdates();
-    } catch (err) {
-      console.warn('[AutoUpdater] Check for updates failed:', err?.message || err);
-    }
-  } else {
-    sendStatusToWindow('error', 'Auto-updater not available');
+  if (!isUpdaterEnabled()) {
+    setUpdateStatus('error', 'Auto-updater is only available in an installed build');
+    return null;
   }
+  return checkForUpdates();
 });
 
 ipcMain.handle('download-update', async () => {
-  if (autoUpdater && updateAvailable) {
-    try {
-      await autoUpdater.downloadUpdate();
-    } catch (err) {
+  if (!isUpdaterEnabled() || !updateAvailable) return null;
+  if (updateDownloadPromise) return updateDownloadPromise;
+
+  updateDownloadPromise = autoUpdater.downloadUpdate()
+    .catch((err) => {
       console.warn('[AutoUpdater] Download failed:', err?.message || err);
-    }
-  }
+      setUpdateStatus('error', err?.message || 'Unable to download update');
+      return null;
+    })
+    .finally(() => {
+      updateDownloadPromise = null;
+    });
+
+  return updateDownloadPromise;
 });
 
 ipcMain.handle('install-update', async () => {
-  if (autoUpdater) {
-    try {
-      autoUpdater.quitAndInstall();
-    } catch (err) {
-      console.warn('[AutoUpdater] Install failed:', err?.message || err);
-    }
+  if (!isUpdaterEnabled() || updateStatus.type !== 'update-downloaded') return false;
+
+  try {
+    autoUpdater.quitAndInstall(false, true);
+    return true;
+  } catch (err) {
+    console.warn('[AutoUpdater] Install failed:', err?.message || err);
+    setUpdateStatus('error', err?.message || 'Unable to install update');
+    return false;
   }
 });
 
@@ -148,6 +183,10 @@ ipcMain.handle('is-update-available', async () => {
 
 ipcMain.handle('get-update-info', async () => {
   return updateInfo;
+});
+
+ipcMain.handle('get-update-state', async () => {
+  return updateStatus;
 });
 
 ipcMain.handle('start-update-checks', async () => {
@@ -182,10 +221,10 @@ ipcMain.handle('is-fullscreen', async () => {
 
 app.on('ready', () => {
   createWindow();
-  // Check for updates on startup (only in production and if auto-updater is available)
-  if (process.env.NODE_ENV !== 'development' && autoUpdater) {
-    autoUpdater.checkForUpdates().catch((err) => {
-      console.warn('[AutoUpdater] Startup check failed:', err?.message || err);
+
+  if (isUpdaterEnabled() && mainWindow) {
+    mainWindow.webContents.once('did-finish-load', () => {
+      void checkForUpdates();
     });
   }
 });

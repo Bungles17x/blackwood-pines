@@ -21,6 +21,7 @@ import {
   Chapter,
   GAME_CHAPTERS,
   SurvivalVitals,
+  UpdateStatus,
 } from './types';
 import { horrorAudio } from './audio/horrorAudio';
 import { saveGame, loadGame, hasSaveGame } from './utils/saveSystem';
@@ -50,6 +51,7 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
+  const [availableUpdateVersion, setAvailableUpdateVersion] = useState<string | undefined>();
 
   // HUD & Stats
   const [inventory, setInventory] = useState<Inventory>({
@@ -136,16 +138,21 @@ export default function App() {
 
   // Check for updates in Electron (non-intrusive notification only)
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.electronAPI) {
-      const cleanup = window.electronAPI.onUpdateStatus((message: any) => {
-        if (typeof message === 'object' && message.type === 'update-available') {
-          setShowUpdateNotification(true);
-        }
-      });
+    if (typeof window === 'undefined' || !window.electronAPI) return;
 
-      void window.electronAPI.checkForUpdates();
-      return cleanup;
-    }
+    const api = window.electronAPI;
+    const handleUpdateStatus = (message: UpdateStatus) => {
+      if (message.type === 'update-available' || message.type === 'update-downloaded') {
+        const info = message.data && typeof message.data === 'object' ? message.data : null;
+        setAvailableUpdateVersion(info && 'version' in info ? String(info.version || '') : undefined);
+        setShowUpdateNotification(true);
+      }
+    };
+
+    const cleanup = api.onUpdateStatus(handleUpdateStatus);
+    void api.getUpdateState().then(handleUpdateStatus);
+    void api.checkForUpdates();
+    return cleanup;
   }, []);
 
   // Check the deployed build so browser players can move to the latest commit.
@@ -768,6 +775,7 @@ export default function App() {
       {/* Update Notification */}
       <UpdateNotification
         isVisible={showUpdateNotification}
+        version={availableUpdateVersion}
         onClick={() => {
           setShowUpdateNotification(false);
           if (window.electronAPI) {

@@ -3,14 +3,42 @@ export type GameState = 'TITLE' | 'PLAYING' | 'PAUSED' | 'GAMEOVER' | 'VICTORY';
 export type CreatureState = 'DORMANT' | 'PATROL' | 'INVESTIGATE' | 'STALK' | 'CHASE';
 
 // Electron API types for auto-updater
+export interface UpdateInfo {
+  version?: string;
+  releaseDate?: string;
+  releaseNotes?: string | Array<{ version?: string; note?: string }>;
+}
+
+export interface UpdateProgress {
+  percent: number;
+  bytesPerSecond?: number;
+  transferred?: number;
+  total?: number;
+}
+
+export type UpdateStatusType =
+  | 'idle'
+  | 'checking-for-update'
+  | 'update-available'
+  | 'update-not-available'
+  | 'download-progress'
+  | 'update-downloaded'
+  | 'error';
+
+export interface UpdateStatus {
+  type: UpdateStatusType;
+  data?: UpdateInfo | UpdateProgress | string | null;
+}
+
 export interface ElectronAPI {
   platform: string;
-  onUpdateStatus: (callback: (message: any) => void) => () => void;
-  checkForUpdates: () => Promise<void>;
-  downloadUpdate: () => Promise<void>;
-  installUpdate: () => Promise<void>;
+  onUpdateStatus: (callback: (message: UpdateStatus) => void) => () => void;
+  checkForUpdates: () => Promise<unknown>;
+  downloadUpdate: () => Promise<unknown>;
+  installUpdate: () => Promise<boolean>;
   isUpdateAvailable: () => Promise<boolean>;
-  getUpdateInfo: () => Promise<any>;
+  getUpdateInfo: () => Promise<UpdateInfo | null>;
+  getUpdateState: () => Promise<UpdateStatus>;
   startUpdateChecks: () => Promise<void>;
   stopUpdateChecks: () => Promise<void>;
 }
@@ -138,4 +166,3 @@ export const GAME_CHAPTERS: Chapter[] = [
     briefing: 'High-voltage floodlights ignite across the forest as the generator roars to life. The noise has enraged the entity. sprint to the South Forestry Gate, hit the emergency release switch, and flee the woods.',
   },
 ];
-

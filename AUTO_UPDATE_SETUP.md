@@ -2,29 +2,30 @@
 
 ## 🔄 How Auto-Update Works
 
-Your Blackwood Pines game now includes automatic update functionality using GitHub Releases. When you launch the game, it will:
+Your Blackwood Pines game includes an opt-in update flow using GitHub Releases. When you launch the installed game, it will:
 
 1. Check for updates from GitHub Releases
-2. Show an update modal with progress
-3. Automatically download and install updates
-4. Restart with the new version
+2. Show a non-blocking notification when a release is available
+3. Let the player review release notes and download with visible progress
+4. Install and restart only after the player confirms
+
+Checks are deduplicated, retried from the update dialog, and skipped in development builds. Browser players use the deployed build metadata to reload when a newer build is published.
 
 ## 📋 Required Setup
 
-### **Step 1: Update GitHub Username**
+### **Step 1: Verify GitHub Release Settings**
 
-You need to replace `YOUR_GITHUB_USERNAME` in `package.json`:
+The GitHub owner and repository are configured in `package.json`:
 
-**In `package.json` (line ~58):**
 ```json
 "publish": {
   "provider": "github",
-  "owner": "YOUR_GITHUB_USERNAME", // ← Change this to your actual GitHub username
+  "owner": "Bungles17x",
   "repo": "blackwood-pines"
 }
 ```
 
-The auto-updater automatically reads this configuration, so you only need to update it in one place!
+Keep this configuration aligned with the repository that publishes the installer.
 
 ### **Step 2: Create GitHub Personal Access Token**
 
@@ -96,10 +97,10 @@ This will:
 ## 🎮 How Users Get Updates
 
 1. User launches the installed game
-2. Game checks GitHub for updates
-3. If a newer version exists, the update modal appears
-4. Game downloads and installs the update automatically
-5. Game restarts with the new version
+2. Game checks GitHub for updates after the window is ready
+3. If a newer version exists, a non-blocking notification appears
+4. The player opens the update dialog, reviews the release notes, and starts the download
+5. The player installs and restarts when the download is complete
 
 ## 📝 Version Numbers
 
@@ -118,18 +119,11 @@ Version format: `MAJOR.MINOR.PATCH`
 
 ### **Test Locally (Without GitHub)**
 
-To test the update UI without publishing:
+To test the renderer without publishing:
 
-1. Open `electron-main.cjs`
-2. Comment out the auto-update check on startup:
-```javascript
-// if (process.env.NODE_ENV !== 'development') {
-//   autoUpdater.checkForUpdates();
-// }
-```
-
-3. Build and run the game - the update modal won't appear
-4. Uncomment to re-enable
+1. Run `npm run dev` for the browser build, or `npm run electron-dev` for Electron.
+2. Browser builds exercise the build-metadata reload path.
+3. Electron update checks run only in packaged builds, so use a published release to test GitHub update discovery and installation.
 
 ### **Test with Real Updates**
 
@@ -145,15 +139,16 @@ To test the update UI without publishing:
 - **GH_TOKEN is required** for automatic publishing
 - **Each release needs a new version number**
 - **Users can still play without internet** (just won't get updates)
-- **Updates download in the background** and install on quit
+- **Updates never download silently**; the player starts the download from the update dialog
+- **Downloaded updates install only after confirmation**, while the updater is also configured to install on a normal app quit
 
 ## 🎯 Summary
 
-1. ✅ Replace `YOUR_GITHUB_USERNAME` in both files
-2. ✅ Create GitHub Personal Access Token
-3. ✅ Set `GH_TOKEN` environment variable
+1. ✅ Verify the GitHub owner and repository in `package.json`
+2. ✅ Create a GitHub Personal Access Token
+3. ✅ Set the `GH_TOKEN` environment variable
 4. ✅ Push code to GitHub
 5. ✅ Run `npm run dist-win` to build and publish
-6. ✅ Users get automatic updates!
+6. ✅ Users receive an opt-in update notification
 
-**Your game will now update automatically!** 🚀
+**Your game is ready to deliver opt-in updates!**
