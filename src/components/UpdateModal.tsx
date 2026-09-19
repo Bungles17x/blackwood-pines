@@ -99,7 +99,8 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isVisible, onClose, on
     if (onSaveGame) {
       await onSaveGame();
     }
-    handleInstall();
+    await handleDownload();
+    await handleInstall();
   };
 
   if (!isVisible) return null;

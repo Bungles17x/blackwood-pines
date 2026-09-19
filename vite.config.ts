@@ -3,9 +3,28 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
+const buildCommit = process.env.GITHUB_SHA || process.env.VITE_COMMIT_SHA || 'development';
+
+const buildInfoPlugin = {
+  name: 'build-info',
+  generateBundle() {
+    this.emitFile({
+      type: 'asset',
+      fileName: 'build-info.json',
+      source: JSON.stringify({
+        commit: buildCommit,
+        builtAt: new Date().toISOString(),
+      }),
+    });
+  },
+};
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    define: {
+      __BUILD_COMMIT__: JSON.stringify(buildCommit),
+    },
+    plugins: [react(), tailwindcss(), buildInfoPlugin],
     base: './', // Use relative path for GitHub Pages compatibility
     resolve: {
       alias: {

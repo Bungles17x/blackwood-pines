@@ -24,10 +24,14 @@ import {
 } from './types';
 import { horrorAudio } from './audio/horrorAudio';
 import { saveGame, loadGame, hasSaveGame } from './utils/saveSystem';
+import { hasNewBuild } from './utils/buildUpdate';
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<HorrorEngine | null>(null);
+  const latestGameStateRef = useRef<GameState>('TITLE');
+  const saveGameRef = useRef<() => void>(() => {});
+  const browserUpdateRef = useRef<() => void>(() => {});
 
   // High-level Game State
   const [gameState, setGameState] = useState<GameState>('TITLE');
@@ -106,6 +110,7 @@ export default function App() {
     fullscreen: false,
   });
 
+  latestGameStateRef.current = gameState;
 
   // Track run time
   useEffect(() => {
@@ -131,25 +136,37 @@ export default function App() {
 
   // Check for updates in Electron (non-intrusive notification only)
   useEffect(() => {
-    // Only check for updates if running in Electron (not in browser)
     if (typeof window !== 'undefined' && window.electronAPI) {
-      // Listen for update status
       const cleanup = window.electronAPI.onUpdateStatus((message: any) => {
         if (typeof message === 'object' && message.type === 'update-available') {
-          // Show non-blocking notification button in top right
           setShowUpdateNotification(true);
         }
       });
 
-      // Initial check on startup (catch any error silently)
-      try {
-        window.electronAPI.checkForUpdates();
-      } catch (err) {
-        console.warn('Initial update check error:', err);
-      }
-
+      void window.electronAPI.checkForUpdates();
       return cleanup;
     }
+  }, []);
+
+  // Check the deployed build so browser players can move to the latest commit.
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.electronAPI) return;
+
+    let checking = false;
+    const checkForNewBuild = async () => {
+      if (checking) return;
+      checking = true;
+      const updateAvailable = await hasNewBuild();
+      checking = false;
+
+      if (updateAvailable) {
+        browserUpdateRef.current();
+      }
+    };
+
+    void checkForNewBuild();
+    const intervalId = window.setInterval(() => void checkForNewBuild(), 5 * 60 * 1000);
+    return () => window.clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -457,6 +474,25 @@ export default function App() {
     }
   };
 
+  saveGameRef.current = handleSaveGame;
+
+  const handleBrowserUpdate = () => {
+    if (latestGameStateRef.current === 'PLAYING') {
+      engineRef.current?.pause();
+      saveGameRef.current();
+    }
+
+    if (document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+
+    const updateUrl = new URL(window.location.href);
+    updateUrl.searchParams.set('update', String(Date.now()));
+    window.location.replace(updateUrl.toString());
+  };
+
+  browserUpdateRef.current = handleBrowserUpdate;
+
   // Load game
   const handleLoadGame = () => {
     const saveData = loadGame();
@@ -734,7 +770,11 @@ export default function App() {
         isVisible={showUpdateNotification}
         onClick={() => {
           setShowUpdateNotification(false);
-          setShowUpdateModal(true);
+          if (window.electronAPI) {
+            setShowUpdateModal(true);
+          } else {
+            handleBrowserUpdate();
+          }
         }}
       />
     </div>
