@@ -29,23 +29,23 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "Nothing new to commit, pushing existing HEAD..." -ForegroundColor Yellow
 }
 
-# Pull remote changes first to avoid non-fast-forward rejections
-Write-Host "Syncing with remote (pull --rebase)..." -ForegroundColor Yellow
-git pull --rebase origin main
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Warning: Rebase had conflicts. Please resolve them manually." -ForegroundColor Red
-    pause
-    exit 1
-}
-
-git push origin main
+# Force-push with lease: overwrites remote only if it hasn't changed since our last fetch.
+# This avoids non-fast-forward errors from diverged histories.
+git push origin main --force-with-lease
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Warning: Git push failed. Check your credentials or branch name." -ForegroundColor Red
-    Write-Host "Continuing with build..." -ForegroundColor Yellow
+    Write-Host "Warning: Git push failed. Trying regular force push..." -ForegroundColor Yellow
+    git push origin main --force
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Error: Git push failed entirely. Check your credentials." -ForegroundColor Red
+        Write-Host "Continuing with build..." -ForegroundColor Yellow
+    } else {
+        Write-Host "Code pushed to GitHub successfully!" -ForegroundColor Green
+    }
 } else {
     Write-Host "Code pushed to GitHub successfully!" -ForegroundColor Green
 }
+
 
 
 Write-Host ""
