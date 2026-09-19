@@ -29,6 +29,15 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "Nothing new to commit, pushing existing HEAD..." -ForegroundColor Yellow
 }
 
+# Pull remote changes first to avoid non-fast-forward rejections
+Write-Host "Syncing with remote (pull --rebase)..." -ForegroundColor Yellow
+git pull --rebase origin main
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Warning: Rebase had conflicts. Please resolve them manually." -ForegroundColor Red
+    pause
+    exit 1
+}
+
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {
@@ -37,6 +46,7 @@ if ($LASTEXITCODE -ne 0) {
 } else {
     Write-Host "Code pushed to GitHub successfully!" -ForegroundColor Green
 }
+
 
 Write-Host ""
 
