@@ -2,6 +2,8 @@
 
 A first-person 3D survival horror game set in a dark foggy forest. Evade the stalker, search for generator parts, and escape through the forestry gate.
 
+### Install OR Play on browser for Free!!
+
 ## Run Locally
 
 **Prerequisites:** Node.js
