@@ -5,6 +5,8 @@
   "type": "module",
   "main": "electron-main.cjs",
   "homepage": "https://github.com/Bungles17x/blackwood-pines",
+  "description": "A 3D survival horror game set in the Blackwood Pines",
+  "author": "Bungles17x",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
@@ -22,8 +24,6 @@
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",
-    "electron": "^44.4.3",
-    "electron-builder": "^26.15.3",
     "electron-updater": "^6.8.9",
     "express": "^4.21.2",
     "lucide-react": "^0.546.0",
@@ -41,6 +41,8 @@
     "@types/three": "^0.185.4",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.4",
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
     "esbuild": "^0.25.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
@@ -58,8 +60,10 @@
       "dist/**/*",
       "electron-main.cjs",
       "preload.cjs",
-      "package.json",
-      "node_modules/**/*"
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/electron-updater/**/*"
     ],
     "publish": {
       "provider": "github",

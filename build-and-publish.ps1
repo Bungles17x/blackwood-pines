@@ -1,9 +1,25 @@
 # Blackwood Pines - Build and Publish to GitHub
-# This script deletes old releases and publishes a new one
+# This script pushes code, deletes old releases, and publishes a new one
 
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host "Blackwood Pines - Build and Publish to GitHub" -ForegroundColor Cyan
 Write-Host "================================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Step 0: Push code to GitHub
+Write-Host "Step 0: Pushing code to GitHub..." -ForegroundColor Yellow
+Write-Host ""
+
+git add .
+git commit -m "Update auto-update system with in-game notifications" -m "Generated with [Devin](https://devin.ai)" -m "Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>" 2>$null
+git push origin main
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Warning: Git push failed or nothing to push. Continuing with build..." -ForegroundColor Yellow
+} else {
+    Write-Host "Code pushed to GitHub successfully!" -ForegroundColor Green
+}
+
 Write-Host ""
 
 # Get GitHub token
@@ -15,8 +31,29 @@ Write-Host ""
 Write-Host "Building Blackwood Pines..." -ForegroundColor Yellow
 Write-Host ""
 
-# Step 1: Delete old releases
-Write-Host "Step 1: Deleting old GitHub releases..." -ForegroundColor Yellow
+# Step 1: Clean release folder
+Write-Host "Step 1: Cleaning release folder..." -ForegroundColor Yellow
+Write-Host ""
+
+if (Test-Path "release") {
+    Write-Host "Release folder exists, attempting to clean..." -ForegroundColor Yellow
+    Start-Sleep -Seconds 2
+    try {
+        Remove-Item -Path "release" -Recurse -Force -ErrorAction Stop
+        Write-Host "Release folder cleaned successfully." -ForegroundColor Green
+    } catch {
+        Write-Host "WARNING: Release folder is locked. Please close any running instances of Blackwood Pines." -ForegroundColor Red
+        pause
+        exit 1
+    }
+} else {
+    Write-Host "Release folder is already clean." -ForegroundColor Green
+}
+
+Write-Host ""
+
+# Step 2: Delete old releases
+Write-Host "Step 2: Deleting old GitHub releases..." -ForegroundColor Yellow
 Write-Host ""
 
 try {
@@ -46,8 +83,8 @@ try {
 
 Write-Host ""
 
-# Step 2: Build the game
-Write-Host "Step 2: Building the game..." -ForegroundColor Yellow
+# Step 3: Build the game
+Write-Host "Step 3: Building the game..." -ForegroundColor Yellow
 Write-Host ""
 
 $env:GH_TOKEN = $plainToken
@@ -61,8 +98,8 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 
-# Step 3: Create executable and publish
-Write-Host "Step 3: Creating Windows executable and publishing to GitHub..." -ForegroundColor Yellow
+# Step 4: Create executable and publish
+Write-Host "Step 4: Creating Windows executable and publishing to GitHub..." -ForegroundColor Yellow
 Write-Host ""
 
 npm run dist-win

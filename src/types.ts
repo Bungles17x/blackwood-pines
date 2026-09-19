@@ -5,8 +5,14 @@ export type CreatureState = 'DORMANT' | 'PATROL' | 'INVESTIGATE' | 'STALK' | 'CH
 // Electron API types for auto-updater
 export interface ElectronAPI {
   platform: string;
-  onUpdateStatus: (callback: (message: string) => void) => void;
+  onUpdateStatus: (callback: (message: any) => void) => void;
   checkForUpdates: () => Promise<void>;
+  downloadUpdate: () => Promise<void>;
+  installUpdate: () => Promise<void>;
+  isUpdateAvailable: () => Promise<boolean>;
+  getUpdateInfo: () => Promise<any>;
+  startUpdateChecks: () => Promise<void>;
+  stopUpdateChecks: () => Promise<void>;
 }
 
 declare global {

@@ -11,6 +11,7 @@ import { CCTVModal } from './components/CCTVModal';
 import { MapModal } from './components/MapModal';
 import { MobileControls } from './components/MobileControls';
 import { UpdateModal } from './components/UpdateModal';
+import { UpdateNotification } from './components/UpdateNotification';
 import {
   GameState,
   Inventory,
@@ -44,6 +45,7 @@ export default function App() {
   const [showMap, setShowMap] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showUpdateNotification, setShowUpdateNotification] = useState(false);
 
   // HUD & Stats
   const [inventory, setInventory] = useState<Inventory>({
@@ -127,11 +129,27 @@ export default function App() {
 
   // Check for updates in Electron
   useEffect(() => {
-    // Only show update modal if running in Electron (not in browser)
+    // Only check for updates if running in Electron (not in browser)
     if (typeof window !== 'undefined' && window.electronAPI) {
-      setShowUpdateModal(true);
+      // Listen for update status
+      const cleanup = window.electronAPI.onUpdateStatus((message: any) => {
+        if (typeof message === 'object' && message.type === 'update-available') {
+          // Show notification during gameplay
+          if (gameState === 'PLAYING') {
+            setShowUpdateNotification(true);
+          } else {
+            // Show modal on title screen
+            setShowUpdateModal(true);
+          }
+        }
+      });
+
+      // Initial check on startup
+      window.electronAPI.checkForUpdates();
+
+      return cleanup;
     }
-  }, []);
+  }, [gameState]);
 
   useEffect(() => {
     if (staminaHideTimerRef.current !== null) {
@@ -698,6 +716,17 @@ export default function App() {
       <UpdateModal
         isVisible={showUpdateModal}
         onClose={() => setShowUpdateModal(false)}
+        onSaveGame={handleSaveGame}
+        gameState={gameState}
+      />
+
+      {/* Update Notification */}
+      <UpdateNotification
+        isVisible={showUpdateNotification}
+        onClick={() => {
+          setShowUpdateNotification(false);
+          setShowUpdateModal(true);
+        }}
       />
     </div>
   );

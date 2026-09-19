@@ -3,6 +3,9 @@ const path = require('path');
 
 let mainWindow;
 let autoUpdater = null;
+let updateCheckInterval = null;
+let updateAvailable = false;
+let updateInfo = null;
 
 // Try to load electron-updater, but don't fail if it's not available
 try {
@@ -39,50 +42,101 @@ function createWindow() {
 // Auto-updater configuration and events (only if available)
 if (autoUpdater) {
   // Feed URL is automatically configured by electron-builder from package.json publish config
+  autoUpdater.autoDownload = false; // Don't auto-download, let user choose
 
   // Auto-updater events
   autoUpdater.on('checking-for-update', () => {
-    sendStatusToWindow('Checking for updates...');
+    sendStatusToWindow('checking-for-update');
   });
 
   autoUpdater.on('update-available', (info) => {
-    sendStatusToWindow('Update available: ' + info.version);
+    updateAvailable = true;
+    updateInfo = info;
+    sendStatusToWindow('update-available', info);
   });
 
   autoUpdater.on('update-not-available', (info) => {
-    sendStatusToWindow('Update not available. Current version: ' + app.getVersion());
+    updateAvailable = false;
+    sendStatusToWindow('update-not-available');
   });
 
   autoUpdater.on('error', (err) => {
-    sendStatusToWindow('Error in auto-updater: ' + err);
+    sendStatusToWindow('error', err);
   });
 
   autoUpdater.on('download-progress', (progressObj) => {
     let log_message = "Download speed: " + progressObj.bytesPerSecond;
     log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
     log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
-    sendStatusToWindow(log_message);
+    sendStatusToWindow('download-progress', progressObj);
   });
 
   autoUpdater.on('update-downloaded', (info) => {
-    sendStatusToWindow('Update downloaded. Will install now...');
-    autoUpdater.quitAndInstall();
+    sendStatusToWindow('update-downloaded', info);
   });
 }
 
-function sendStatusToWindow(text) {
+function sendStatusToWindow(type, data) {
   if (mainWindow) {
-    mainWindow.webContents.send('update-status', text);
+    mainWindow.webContents.send('update-status', { type, data });
   }
 }
 
-// IPC handler for manual update check
+// Start periodic update checks (every 5 minutes during gameplay)
+function startPeriodicUpdateChecks() {
+  if (updateCheckInterval) clearInterval(updateCheckInterval);
+  
+  if (autoUpdater && process.env.NODE_ENV !== 'development') {
+    updateCheckInterval = setInterval(() => {
+      if (autoUpdater) {
+        autoUpdater.checkForUpdates();
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+  }
+}
+
+function stopPeriodicUpdateChecks() {
+  if (updateCheckInterval) {
+    clearInterval(updateCheckInterval);
+    updateCheckInterval = null;
+  }
+}
+
+// IPC handlers
 ipcMain.handle('check-for-updates', async () => {
   if (autoUpdater) {
     autoUpdater.checkForUpdates();
   } else {
-    sendStatusToWindow('Auto-updater not available');
+    sendStatusToWindow('error', 'Auto-updater not available');
   }
+});
+
+ipcMain.handle('download-update', async () => {
+  if (autoUpdater && updateAvailable) {
+    autoUpdater.downloadUpdate();
+  }
+});
+
+ipcMain.handle('install-update', async () => {
+  if (autoUpdater) {
+    autoUpdater.quitAndInstall();
+  }
+});
+
+ipcMain.handle('is-update-available', async () => {
+  return updateAvailable;
+});
+
+ipcMain.handle('get-update-info', async () => {
+  return updateInfo;
+});
+
+ipcMain.handle('start-update-checks', async () => {
+  startPeriodicUpdateChecks();
+});
+
+ipcMain.handle('stop-update-checks', async () => {
+  stopPeriodicUpdateChecks();
 });
 
 app.on('ready', () => {
@@ -94,6 +148,7 @@ app.on('ready', () => {
 });
 
 app.on('window-all-closed', () => {
+  stopPeriodicUpdateChecks();
   if (process.platform !== 'darwin') {
     app.quit();
   }
